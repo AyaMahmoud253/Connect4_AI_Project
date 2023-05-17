@@ -1,4 +1,3 @@
- 
 import numpy as np
 import pygame 
 import sys
@@ -117,3 +116,226 @@ def evaluate_window(window, piece):
 
     return score    
 
+
+# scoring the overall attractiveness of a board after a piece has been droppped
+def score_position(board, piece):
+
+    score = 0
+
+    # score center column --> we are prioritizing the central column because it provides more potential winning windows
+    center_array = [int(i) for i in list(board[:,COLS//2])]
+    center_count = center_array.count(piece)
+    score += center_count * 6
+
+    # below we go over every single window in different directions and adding up their values to the score
+    # score horizontal
+    for r in range(ROWS):
+        row_array = [int(i) for i in list(board[r,:])]
+        for c in range(COLS - 3):
+            window = row_array[c:c + 4]
+            score += evaluate_window(window, piece)
+
+    # score vertical
+    for c in range(COLS):
+        col_array = [int(i) for i in list(board[:,c])]
+        for r in range(ROWS-3):
+            window = col_array[r:r+4]
+            score += evaluate_window(window, piece)
+
+    # score positively sloped diagonals
+    for r in range(3,ROWS):
+        for c in range(COLS - 3):
+            window = [board[r-i][c+i] for i in range(4)]
+            score += evaluate_window(window, piece)
+
+    # score negatively sloped diagonals
+    for r in range(3,ROWS):
+        for c in range(3,COLS):
+            window = [board[r-i][c-i] for i in range(4)]
+            score += evaluate_window(window, piece)
+
+    return score
+
+# checking if the given turn or in other words node in the alpha_beta tree is terminal
+# a terminal node is player winning, AI winning or board being filled up
+def is_terminal_node(board):
+    return winning_move(board, PLAYER_PIECE) or winning_move(board, AI_PIECE) or len(get_valid_locations(board)) == 0
+
+
+
+# minmax algo
+def minimax1(board, depth, maximizing_player):
+
+    valid_locations = get_valid_locations(board)
+    is_terminal = is_terminal_node(board)
+
+    if depth == 0 or is_terminal:
+        if is_terminal:
+            if winning_move(board, AI_PIECE):
+                return None, 10000000
+            elif winning_move(board, PLAYER_PIECE):
+                return None, -10000000
+            else:
+                return None, 0
+        else:
+            return None, score_position(board, AI_PIECE)
+
+    if maximizing_player:
+        best_value = -math.inf
+        best_column = random.choice(valid_locations)
+
+        for col in valid_locations:
+            row = get_next_open_row(board, col)
+            if row is None:
+                continue
+
+            b_copy = board.copy()
+            drop_piece(b_copy, row, col, AI_PIECE)
+            _, value = minimax1(b_copy, depth - 1, False)
+
+            if value > best_value:
+                best_value = value
+                best_column = col
+
+        return best_column, best_value
+
+    else:
+        best_value = math.inf
+        best_column = random.choice(valid_locations)
+
+        for col in valid_locations:
+            row = get_next_open_row(board, col)
+            if row is None:
+                continue
+
+            b_copy = board.copy()
+            drop_piece(b_copy, row, col, PLAYER_PIECE)
+            _, value = minimax1(b_copy, depth - 1, True)
+
+            if value < best_value:
+                best_value = value
+                best_column = col
+
+        return best_column, best_value
+
+
+# alpha_beta
+def alpha_beta(board, depth, alpha, beta, maximizing_player):
+
+    # all valid locations on the board
+    valid_locations = get_valid_locations(board)
+
+    # boolean that tells if the current board is terminal
+    is_terminal = is_terminal_node(board)
+
+    # if the board is terminal or depth == 0
+    # we score the win very high and a draw as 0
+    if depth == 0 or is_terminal:
+        if is_terminal: # winning move 
+            if winning_move(board, AI_PIECE):
+                return (None, 10000000)
+            elif winning_move(board, PLAYER_PIECE):
+                return (None, -10000000)
+            else:
+                return (None, 0)
+        # if depth is zero, we simply score the current board
+        else: # depth is zero
+            return (None, score_position(board, AI_PIECE))
+
+    # if the current board is not rerminal and we are maximizing
+    if maximizing_player:
+
+        # initial value is what we do not want - negative infinity
+        value = -math.inf
+
+        # this will be the optimal column. Initially it is random
+        column = random.choice(valid_locations)
+
+        # for every valid column, we simulate dropping a piece with the help of a board copy
+        # and run the alpha_beta on it with decresed depth and switched player
+        for col in valid_locations:
+            row = get_next_open_row(board, col)
+            b_copy = board.copy()
+            drop_piece(b_copy, row, col, AI_PIECE)
+            # recursive call
+            new_score = alpha_beta(b_copy, depth-1, alpha, beta, False)[1]
+            # if the score for this column is better than what we already have
+            if new_score > value:
+                value = new_score
+                column = col
+            # alpha is the best option we have overall
+            alpha = max(value, alpha) 
+            # if alpha (our current move) is greater (better) than beta (opponent's best move), then 
+            # the oponent will never take it and we can prune this branch
+            if alpha >= beta:
+                break
+
+        return column, value
+    
+    # same as above, but for the minimizing player
+    else: # for thte minimizing player
+        value = math.inf
+        column = random.choice(valid_locations)
+        for col in valid_locations:
+            row = get_next_open_row(board, col)
+            b_copy = board.copy()
+            drop_piece(b_copy, row, col, PLAYER_PIECE)
+            new_score = alpha_beta(b_copy, depth-1, alpha, beta, True)[1]
+            if new_score < value:
+                value = new_score
+                column = col
+            beta = min(value, beta) 
+            if alpha >= beta:
+                break
+        return column, value
+
+
+
+def get_valid_locations(board):
+    valid_locations = []
+    
+    for column in range(COLS):
+        if is_valid_location(board, column):
+            valid_locations.append(column)
+
+    return valid_locations
+
+
+
+def end_game():
+    global game_over
+    game_over = True
+    print(game_over)
+
+
+
+board = create_board()
+
+
+game_over = False
+
+
+not_over = True
+
+
+turn = random.randint(PLAYER_TURN, AI_TURN)
+
+
+pygame.init()
+
+# size of one game location
+sq_size = 100
+
+# dimensions for pygame GUI
+width = COLS * sq_size
+height = (ROWS + 1) * sq_size
+circle_radius = int(sq_size/2 - 5)
+size = (width, height)
+screen = pygame.display.set_mode(size)
+
+
+my_font = pygame.font.SysFont("monospace", 75)
+
+
+draw_board(board)
+pygame.display.update()
