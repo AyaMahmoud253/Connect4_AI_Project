@@ -399,3 +399,70 @@ while not game_over and x==1:
         turn += 1
         # this will alternate between 0 and 1 withe very turn
         turn = turn % 2
+
+#for alpha_beta algo
+while not game_over and x==2:
+    if turn == PLAYER_TURN and not game_over and not_over:
+        
+        
+       # Generate a random column
+       
+       valid_loc  = get_valid_locations(board)
+       col = random.choice(valid_loc)
+
+       if is_valid_location(board, col):
+           
+           
+           
+           pygame.time.wait(500)
+           row = get_next_open_row(board, col)
+           drop_piece(board, row, col, PLAYER_PIECE)
+           if winning_move(board, PLAYER_PIECE):
+               
+               
+            
+               print("PLAYER 2 WINS!")
+               label = my_font.render("PLAYER 2 WINS!", 1, YELLOW)
+               screen.blit(label, (40, 10))
+               not_over = False
+               t = Timer(3.0, end_game)
+               t.start()
+       draw_board(board)
+
+    # increment turn by 1
+    turn += 1
+    # this will alternate between 0 and 1 with every turn
+    turn = turn % 2
+
+    
+
+   
+
+       
+
+                     
+    # if its the AI's turn
+    if turn == AI_TURN and not game_over and not_over:
+
+        # the column to drop in is found using alpha_beta
+        col, minimax_score = alpha_beta(board, 5, -math.inf, math.inf, True)
+
+        if is_valid_location(board, col):
+            pygame.time.wait(500)
+            row = get_next_open_row(board, col)
+            drop_piece(board, row, col, AI_PIECE)
+            if winning_move(board, AI_PIECE):
+                print("PLAYER 2 WINS!")
+                label = my_font.render("PLAYER 2 WINS!", 1, YELLOW)
+                screen.blit(label, (40, 10))
+                not_over = False
+                t = Timer(3.0, end_game)
+                t.start()
+        draw_board(board)    
+
+        # increment turn by 1
+        turn += 1
+        # this will alternate between 0 and 1 withe very turn
+        turn = turn % 2
+
+
