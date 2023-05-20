@@ -364,7 +364,7 @@ while not game_over and x==1:
                
             
                print("PLAYER 2 WINS!")
-               label = my_font.render("PLAYER 2 WINS!", 1, YELLOW)
+               label = my_font.render("PLAYER 1 WINS!", 1, YELLOW)
                screen.blit(label, (40, 10))
                not_over = False
                t = Timer(3.0, end_game)
@@ -421,8 +421,8 @@ while not game_over and x==2:
                
                
             
-               print("PLAYER 2 WINS!")
-               label = my_font.render("PLAYER 2 WINS!", 1, YELLOW)
+               print("PLAYER 1 WINS!")
+               label = my_font.render("PLAYER 1 WINS!", 1, YELLOW)
                screen.blit(label, (40, 10))
                not_over = False
                t = Timer(3.0, end_game)
@@ -464,5 +464,4 @@ while not game_over and x==2:
         turn += 1
         # this will alternate between 0 and 1 withe very turn
         turn = turn % 2
-
 
