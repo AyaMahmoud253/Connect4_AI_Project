@@ -363,7 +363,7 @@ while not game_over and x==1:
                
                
             
-               print("PLAYER 2 WINS!")
+               print("PLAYER 1 WINS!")
                label = my_font.render("PLAYER 1 WINS!", 1, YELLOW)
                screen.blit(label, (40, 10))
                not_over = False
